@@ -1,0 +1,68 @@
+#define WS2812_PORT 0
+#define WS2812_BIT  6
+
+#define NUM_LED 60
+
+uint32_t LEDArray[NUM_LED] = {0};
+
+
+void sendzero(void);
+void sendone(void);
+void sendLED(uint32_t colourInfo);
+void setLED(uint16_t pos, uint8_t Red, uint8_t Green, uint8_t Blue);
+volatile uint16_t zc;
+
+void sendAllLED(void){
+    int16_t i;
+    
+    for(i=0; i<NUM_LED; i++){
+        sendLED(LEDArray[i]);
+    }
+
+}
+
+
+
+
+void sendLED(uint32_t colourInfo){
+    int8_t i;
+    uint32_t colourTemp;
+    colourInfo = colourInfo << 8;
+    for (i=0; i<24; i++){
+        if(colourInfo & 0x80000000){
+            sendone();
+        }else{
+            sendzero();
+        }
+        colourInfo = colourInfo << 1;
+    }
+}
+
+void setLED(uint16_t pos, uint8_t Red, uint8_t Green, uint8_t Blue){
+    pos--;
+    if((pos < NUM_LED) && (pos >= 0)){
+        LEDArray[pos] = (Green << 16) | (Red << 8) | Blue;
+    }
+}
+
+//Sends a zero with carefully calibrated delays :P
+void sendzero(void){
+    LPC_GPIO[WS2812_PORT]->MASKED_ACCESS[(1<<WS2812_BIT)] = (1<<WS2812_BIT);
+    zc++;
+    LPC_GPIO[WS2812_PORT]->MASKED_ACCESS[(1<<WS2812_BIT)] = (0<<WS2812_BIT);
+    zc++;
+    zc++;
+
+}
+
+//Sends a one with carefully calibrated delays :P
+void sendone(void){
+    LPC_GPIO[WS2812_PORT]->MASKED_ACCESS[(1<<WS2812_BIT)] = (1<<WS2812_BIT);
+    zc++;
+    //zc++;
+    zc++;
+    zc++;
+    LPC_GPIO[WS2812_PORT]->MASKED_ACCESS[(1<<WS2812_BIT)] = (0<<WS2812_BIT);
+    //zc++;
+
+}
